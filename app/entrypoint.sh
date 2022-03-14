@@ -11,7 +11,12 @@ then
     echo "PostgreSQL started"
 fi
 
-# python manage.py flush --no-input
-# python manage.py migrate
+
+if [ -n "$MIGRATE_HERE" ]
+then
+    echo "Running migrations..."
+    python manage.py migrate
+    echo "Running migrations finished"
+fi
 
 exec "$@"

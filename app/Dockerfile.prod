@@ -20,10 +20,10 @@ RUN apt update
 RUN apt -y install libpq-dev gcc python3-dev
 
 # lint
-RUN pip install --upgrade pip
-RUN pip install flake8
-COPY ./hello_django .
-RUN flake8 --ignore=E501,F401 .
+#RUN pip install --upgrade pip
+#RUN pip install flake8
+#COPY . .
+#RUN flake8 --ignore=E501,F401 .
 
 # install dependencies
 COPY ./requirements.txt .
@@ -65,7 +65,7 @@ RUN sed -i 's/\r$//g'  $APP_HOME/entrypoint.prod.sh
 RUN chmod +x  $APP_HOME/entrypoint.prod.sh
 
 # copy project
-COPY ./hello_django $APP_HOME
+COPY . $APP_HOME
 
 # chown all the files to the app user
 RUN chown -R app:app $APP_HOME

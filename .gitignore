@@ -1,5 +1,8 @@
-.env.prod
-.env.prod.db
+#.env.prod
+#.env.prod.db
+
+# Celery #
+celerybeat-schedule
 
 # Django #
 *.log

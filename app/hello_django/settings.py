@@ -34,12 +34,13 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1 [::1
 # Application definition
 
 INSTALLED_APPS = [
+    'groups.apps.GroupsConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    # 'django.contrib.staticfiles',
 ]
 
 MIDDLEWARE = [
@@ -88,6 +89,19 @@ DATABASES = {
 }
 
 
+REDIS_CACHE_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")  # 'amqp://guest:guest@localhost:5672//'
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+CELERY_BEAT_SCHEDULE = {
+    'update_groups_members_count': {
+        'task': 'groups.tasks.update_groups_members_count',
+        'schedule': 10.0,  # seconds
+        'args': (2, 10)
+    },
+}
+
+
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
@@ -112,7 +126,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 

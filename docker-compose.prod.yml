@@ -1,23 +1,51 @@
 version: '3.8'
 
 services:
-  web:
-    build:
-      context: ./app
-      dockerfile: Dockerfile.prod
-    command: gunicorn hello_django.wsgi:application --bind 0.0.0.0:8000
-    ports:
-      - 8000:8000
-    env_file:
-      - ./.env.prod
-    depends_on:
-      - db
+  redis:
+#    image: redis:6-alpine
+    image: eqalpha/keydb:latest
+    command: keydb-server /etc/keydb/keydb.conf --server-threads 4
   db:
     image: postgres:14-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     env_file:
       - ./.env.prod.db
+  web:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    command: gunicorn hello_django.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers=4 --preload  # python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.prod
+    environment:
+      - MIGRATE_HERE=1
+    depends_on:
+      - db
+      - redis
+  celery:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    command: celery --app=hello_django worker --loglevel=INFO
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - web
+      - redis
+  celery-beat:
+    build:
+      context: ./app
+      dockerfile: Dockerfile.prod
+    command: celery --app=hello_django beat --loglevel=INFO
+    env_file:
+      - ./.env.prod
+    depends_on:
+      - web
+      - redis
+      - celery
 
 volumes:
   postgres_data:

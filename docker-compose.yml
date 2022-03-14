@@ -1,15 +1,9 @@
 version: '3.8'
 
 services:
-  web:
-    build: ./app
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./app/:/usr/src/app/
-    ports:
-      - 8000:8000
-    env_file:
-      - ./.env.dev
+  redis:
+#    image: redis:6-alpine
+    image: eqalpha/keydb:latest
   db:
     image: postgres:14-alpine
     volumes:
@@ -18,6 +12,42 @@ services:
       - POSTGRES_USER=hello_django
       - POSTGRES_PASSWORD=hello_django
       - POSTGRES_DB=hello_django_dev
+  web:
+    restart: always
+    build: ./app
+    command: gunicorn hello_django.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --reload  # python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./app/:/usr/src/app/
+    ports:
+      - 8000:8000
+    env_file:
+      - ./.env.dev
+    environment:
+      - MIGRATE_HERE=1
+    depends_on:
+      - db
+      - redis
+  celery:
+    build: ./app
+    command: celery --app=hello_django worker --loglevel=INFO --logfile=logs/celery.log
+    volumes:
+      - ./app:/usr/src/app
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - web
+      - redis
+  celery-beat:
+    build: ./app
+    command: celery --app=hello_django beat --loglevel=INFO --logfile=logs/celery-beat.log
+    volumes:
+      - ./app/:/usr/src/app/
+    env_file:
+      - ./.env.dev
+    depends_on:
+      - web
+      - redis
+      - celery
 
 volumes:
   postgres_data:
