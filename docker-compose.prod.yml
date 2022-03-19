@@ -1,8 +1,7 @@
 version: '3.8'
 
 services:
-  redis:
-#    image: redis:6-alpine
+  keydb:
     image: eqalpha/keydb:latest
     command: keydb-server /etc/keydb/keydb.conf --server-threads 4
   db:
@@ -24,7 +23,7 @@ services:
       - MIGRATE_HERE=1
     depends_on:
       - db
-      - redis
+      - keydb
   celery:
     build:
       context: ./app
@@ -34,7 +33,7 @@ services:
       - ./.env.prod
     depends_on:
       - web
-      - redis
+      - keydb
   celery-beat:
     build:
       context: ./app
@@ -44,7 +43,7 @@ services:
       - ./.env.prod
     depends_on:
       - web
-      - redis
+      - keydb
       - celery
 
 volumes:

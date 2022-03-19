@@ -28,7 +28,7 @@ def index_groups(req: HttpRequest) -> JsonResponse:
 async def get_group_info(req: HttpRequest, group_id: int) -> HttpResponse:
     """Return information about single group"""
 
-    cache: aioredis.Redis = await aioredis.from_url(settings.REDIS_CACHE_URL, max_connections=1)
+    cache: aioredis.Redis = await aioredis.from_url(settings.KEYDB_CACHE_URL, max_connections=1)
 
     try:
         cached_group_info = await cache.get(Group.get_cache_key(group_id))

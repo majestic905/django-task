@@ -89,10 +89,10 @@ DATABASES = {
 }
 
 
-REDIS_CACHE_URL = os.environ.get("REDIS_URL", "redis://redis:6379/0")
+KEYDB_CACHE_URL = os.environ.get("KEYDB_URL", "redis://keydb:6379/0")
 
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")  # 'amqp://guest:guest@localhost:5672//'
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://redis:6379/0")
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER", "redis://keydb:6379/0")  # 'amqp://guest:guest@localhost:5672//'
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_BROKER", "redis://keydb:6379/0")
 CELERY_BEAT_SCHEDULE = {
     'update_groups_members_count': {
         'task': 'groups.tasks.update_groups_members_count',
