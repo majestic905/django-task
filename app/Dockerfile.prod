@@ -13,11 +13,13 @@ ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
 # update apt cache
-RUN apt update
-
 # install psycopg2 dependencies
-RUN apt update
-RUN apt -y install libpq-dev gcc python3-dev
+RUN apt update && apt install -y \
+    libpq-dev \
+    gcc \
+    python3-dev \
+ && apt clean \
+ && rm -rf /var/lib/apt/lists/
 
 # lint
 #RUN pip install --upgrade pip
@@ -49,15 +51,16 @@ ENV APP_HOME=/home/app/web
 RUN mkdir $APP_HOME
 WORKDIR $APP_HOME
 
-# install dependencies
-RUN apt update
-RUN apt -y install libpq5
+# install dependencies (libpq used by psycopg2 and netcat is used in entrypoint.sh)
+RUN apt update && apt install -y \
+    libpq5 \
+    netcat \
+ && apt clean \
+ && rm -rf /var/lib/apt/lists/
+
 COPY --from=builder /usr/src/app/wheels /wheels
 COPY --from=builder /usr/src/app/requirements.txt .
 RUN pip install --no-cache /wheels/*
-
-# install netcat (used in entrypoint)
-RUN apt -y install netcat
 
 # copy entrypoint.sh
 COPY ./entrypoint.sh .
