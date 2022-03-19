@@ -15,16 +15,6 @@ from groups.models import Group
 from .utils import get_group_from_db, create_group_from_api_response
 
 
-@sync_to_async
-def index_groups(req: HttpRequest) -> JsonResponse:
-    """Return all group ids"""
-
-    groups = Group.objects.all()
-    groups = [model_to_dict(group) for group in groups]
-    data = {"groups": groups}
-    return JsonResponse(data)
-
-
 async def get_group_info(req: HttpRequest, group_id: int) -> HttpResponse:
     """Return information about single group"""
 

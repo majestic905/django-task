@@ -1,1 +1,1 @@
-from .groups import index_groups, get_group_info
+from .groups import get_group_info

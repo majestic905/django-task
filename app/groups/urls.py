@@ -1,7 +1,6 @@
 from django.urls import path
-from . import views
+from .views import get_group_info
 
 urlpatterns = [
-    path('<int:group_id>', views.get_group_info, name='get_group_info'),
-    path('', views.index_groups, name='index_groups'),
+    path('<int:group_id>', get_group_info, name='get_group_info'),
 ]
