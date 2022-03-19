@@ -1,0 +1,5 @@
+.pytest_cache
+logs
+staticfiles
+celerybeat-schedule
+db.sqlite3
