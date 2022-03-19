@@ -17,6 +17,17 @@ then
     echo "Running migrations..."
     python manage.py migrate
     echo "Running migrations finished"
+
+    echo "Collecting static files..."
+    python manage.py collectstatic --no-input --clear
+    echo "Collecting static files finished"
+
+    echo "Creating superuser..."
+    if [ "$DJANGO_SUPERUSER_USERNAME" ]
+    then
+      python manage.py createsuperuser --noinput --username $DJANGO_SUPERUSER_USERNAME --email $DJANGO_SUPERUSER_EMAIL
+    fi
+    echo "Created superuser"
 fi
 
 exec "$@"
