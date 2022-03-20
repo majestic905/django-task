@@ -36,7 +36,7 @@ async def get_group_info(req: HttpRequest, group_id: int) -> HttpResponse:
 
             group = await create_group_from_api_response(api_response)
 
-        await cache.set(Group.get_cache_key(group.group_id), json.dumps(group.cache_info))
+        await cache.set(Group.get_cache_key(group.group_id), json.dumps(group.cache_info), ex=60)
 
         return JsonResponse(group.cache_info)
     except Exception as error:
