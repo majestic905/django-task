@@ -15,8 +15,10 @@ services:
       context: ./app
       dockerfile: Dockerfile.prod
     command: gunicorn hello_django.asgi:application -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers=4 --preload  # python manage.py runserver 0.0.0.0:8000
-    ports:
-      - 8000:8000
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+    expose:
+      - 8000
     env_file:
       - ./.env.prod
     environment:
@@ -45,6 +47,15 @@ services:
       - web
       - keydb
       - celery
+  nginx:
+    build: ./nginx
+    volumes:
+      - static_volume:/home/app/web/staticfiles
+    ports:
+      - 1337:80
+    depends_on:
+      - web
 
 volumes:
+  static_volume:
   postgres_data:

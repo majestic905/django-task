@@ -19,8 +19,9 @@ def setup_another_task_chain(minutes: int = 60, max_at_once: int = 500):
 
 
 def update_groups_info(groups):
+    logger.info(f"update_groups_members_count: updating {len(groups)} groups")
+
     group_ids = [group.group_id for group in groups]
-    logger.info(f"update_groups_members_count: updating {len(group_ids)} groups")
     groups_info = fetch_groups_info(group_ids)
 
     for group_info, group in zip(groups_info, groups):
@@ -41,10 +42,10 @@ def update_groups_members_count(minutes: int = 60, max_at_once: int = 500):
     :type max_at_once: int
     """
 
-    try:
-        if max_at_once <= 0:
-            raise ValueError("max_at_once must be greater than 0")
+    if max_at_once <= 0:
+        raise ValueError("max_at_once must be greater than 0")
 
+    try:
         max_at_once = min(500, max_at_once)
         time_margin = timezone.now() - timedelta(minutes=minutes)
         groups = Group.objects.only('group_id', 'updated_at').filter(updated_at__lte=time_margin)[:max_at_once]
