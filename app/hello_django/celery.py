@@ -18,3 +18,9 @@ app.control.purge()
 
 # Load task modules from all registered Django apps.
 app.autodiscover_tasks()
+
+
+@app.on_after_finalize.connect
+def run_groups_update(sender, **kwargs):
+    print('in on_after_finalize)')
+    sender.send_task('groups.tasks.update_groups_members_count', args=(1, 10))
