@@ -30,6 +30,13 @@ DEBUG = int(os.environ.get("DEBUG", default=0))
 # For example: 'DJANGO_ALLOWED_HOSTS=localhost 127.0.0.1 [::1]'
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost 127.0.0.1 [::1]").split(" ")
 
+CSRF_TRUSTED_ORIGINS = (
+    'http://localhost:1337',
+    'http://localhost:3000',
+    'http://localhost:8000',
+)
+CSRF_COOKIE_DOMAIN = 'localhost'
+
 
 # Application definition
 
