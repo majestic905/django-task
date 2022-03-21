@@ -22,13 +22,10 @@ async def _init_session():
         session = aiohttp.ClientSession(timeout=timeout, connector=connector, loop=loop)
 
 
-class GroupApiResponse(TypedDict):
-    id: int
-    name: str
-    members_count: int
+KEYS = ['id', 'name', 'members_count']
 
 
-async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_version: str = "5.131") -> Tuple[Optional[int], Optional[GroupApiResponse]]:
+async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_version: str = "5.131") -> Tuple[Optional[int], Optional[dict]]:
     """Call VK API at https://api.vk.com/method/groups.getById for single group_id
 
     :param group_id: Integer VK group id (not the name from URL)
@@ -65,10 +62,12 @@ async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_
         if not response_data or not isinstance(response_data, list) or len(response_data) != 1:
             return -1, None
 
-        return None, response_data[0]
+        response_data = response_data[0]
+
+        return None, {key: response_data.get(key) for key in KEYS}
 
 
-def fetch_members_count_info(group_ids: List[int], access_token: str = ACCESS_TOKEN, api_version: str = '5.131') -> List[Tuple[int, int]]:
+def fetch_groups_info(group_ids: List[int], access_token: str = ACCESS_TOKEN, api_version: str = '5.131') -> List[dict]:
     """Fetch members count for multiple group (max 500)
 
     :param group_ids: list of VK group ids
@@ -108,4 +107,4 @@ def fetch_members_count_info(group_ids: List[int], access_token: str = ACCESS_TO
     if not response_data or not isinstance(response_data, list) or len(response_data) != len(group_ids):
         raise KeyError('VK API returned not the same number of groups as requested')
 
-    return [(group_info['id'], group_info.get('members_count', None)) for group_info in response_data]
+    return [{key: group_info.get(key) for key in KEYS} for group_info in response_data]

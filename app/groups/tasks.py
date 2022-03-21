@@ -4,7 +4,7 @@ from django.db.models import Min
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from .models import Group
-from .vk_api import fetch_members_count_info
+from .vk_api import fetch_groups_info
 
 
 logger = get_task_logger('groups_tasks_logger')
@@ -21,13 +21,14 @@ def setup_another_task_chain(minutes: int = 60, max_at_once: int = 500):
 def update_groups_info(groups):
     group_ids = [group.group_id for group in groups]
     logger.info(f"update_groups_members_count: updating {len(group_ids)} groups")
-    member_counts = fetch_members_count_info(group_ids)
+    groups_info = fetch_groups_info(group_ids)
 
-    for (group_id, users_count), group in zip(member_counts, groups):
-        group.users_count = users_count
+    for group_info, group in zip(groups_info, groups):
+        group.title = group_info['name']
+        group.users_count = group_info['members_count']
         group.updated_at = timezone.now()
 
-    Group.objects.bulk_update(groups, ['users_count', 'updated_at'])
+    Group.objects.bulk_update(groups, ['title', 'users_count', 'updated_at'])
 
 
 @shared_task
@@ -40,19 +41,24 @@ def update_groups_members_count(minutes: int = 60, max_at_once: int = 500):
     :type max_at_once: int
     """
 
-    if max_at_once <= 0:
-        raise ValueError("max_at_once must be greater than 0")
+    try:
+        if max_at_once <= 0:
+            raise ValueError("max_at_once must be greater than 0")
 
-    max_at_once = min(500, max_at_once)
-    time_margin = timezone.now() - timedelta(minutes=minutes)
-    groups = Group.objects.only('group_id', 'updated_at').filter(updated_at__lte=time_margin)[:max_at_once]
+        max_at_once = min(500, max_at_once)
+        time_margin = timezone.now() - timedelta(minutes=minutes)
+        groups = Group.objects.only('group_id', 'updated_at').filter(updated_at__lte=time_margin)[:max_at_once]
 
-    if len(groups) == 0:
-        logger.info(f"update_groups_members_count: no groups to update")
-        setup_another_task_chain(minutes=minutes)
-        return
+        if len(groups) == 0:
+            logger.info(f"update_groups_members_count: no groups to update")
+            setup_another_task_chain(minutes=minutes)
+            return
 
-    update_groups_info(groups)
+        update_groups_info(groups)
 
-    logger.info(f"update_groups_members_count: creating another task")
-    update_groups_members_count.delay(minutes, max_at_once)
+        logger.info(f"update_groups_members_count: creating another task")
+        update_groups_members_count.delay(minutes, max_at_once)
+    except Exception as error:
+        logger.info(error)
+        logger.info(f"update_groups_members_count: error happened, setting up another task")
+        update_groups_members_count.apply_async((minutes, max_at_once), countdown=(minutes * 60))

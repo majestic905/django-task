@@ -1,7 +1,6 @@
 from asgiref.sync import sync_to_async
 from django.db import IntegrityError
 from groups.models import Group
-from groups.vk_api import GroupApiResponse
 from typing import Optional
 
 
@@ -17,7 +16,7 @@ def get_group_from_db(group_id: int) -> Optional[Group]:
 
 
 @sync_to_async(thread_sensitive=True)
-def create_group_from_api_response(api_response: GroupApiResponse) -> Group:
+def create_group_from_api_response(api_response: dict) -> Group:
     """Async adapter for Group.objects.create"""
     try:
         return Group.objects.create(
