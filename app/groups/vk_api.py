@@ -57,10 +57,14 @@ async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_
         response_data = await response.json()
 
         if 'error' in response_data or 'response' not in response_data:
-            error_code = response_data.get('error', -1)
+            error_code = response_data.get('error', {}).get('error_code', -1)
             return error_code, None
 
         response_data = response_data['response']
+
+        if not response_data or not isinstance(response_data, list) or len(response_data) != 1:
+            return -1, None
+
         return None, response_data[0]
 
 
@@ -100,4 +104,8 @@ def fetch_members_count_info(group_ids: List[int], access_token: str = ACCESS_TO
         raise KeyError('VK API response error')
 
     response_data = response_data['response']
+
+    if not response_data or not isinstance(response_data, list) or len(response_data) != len(group_ids):
+        raise KeyError('VK API returned not the same number of groups as requested')
+
     return [(group_info['id'], group_info.get('members_count', None)) for group_info in response_data]

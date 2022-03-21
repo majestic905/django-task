@@ -28,7 +28,7 @@ async def get_group_info(req: HttpRequest, group_id: int) -> HttpResponse:
             (error_code, api_response) = await fetch_group_info(group_id)
 
             if error_code is not None:
-                return HttpResponse(f"API responded with {error_code} error_code", status=422)
+                return HttpResponse(f"Bad VK API response, error_code {error_code}", status=422)
 
             group = await create_group_from_api_response(api_response)
 
