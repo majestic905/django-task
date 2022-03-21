@@ -5,7 +5,7 @@ from django.utils import timezone
 class Group(models.Model):
     group_id = models.IntegerField(unique=True)
     title = models.CharField(max_length=200)
-    users_count = models.IntegerField()
+    users_count = models.IntegerField(null=True)
     updated_at = models.DateTimeField(default=timezone.now)
 
     @staticmethod
