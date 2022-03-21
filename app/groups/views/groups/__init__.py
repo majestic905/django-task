@@ -3,18 +3,27 @@ import aioredis
 import traceback
 
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.conf import settings
 
 from groups.vk_api import fetch_group_info
 from groups.models import Group
+from groups.tasks import create_group_from_cache_entry
 
-from .utils import get_group_from_db, create_group_from_api_response
+from .utils import get_group_from_db
+
+
+cache = None
+
+def _init_cache():
+    global cache
+    if not cache:
+        print('Creating new Redis instance...', flush=True)
+        cache = aioredis.Redis(host='keydb', port=6379, single_connection_client=True)
 
 
 async def get_group_info(req: HttpRequest, group_id: int) -> HttpResponse:
     """Return information about single group"""
 
-    cache: aioredis.Redis = await aioredis.from_url(settings.KEYDB_CACHE_URL, max_connections=1)
+    _init_cache()
 
     try:
         cached_group_info = await cache.get(Group.get_cache_key(group_id))
@@ -24,21 +33,22 @@ async def get_group_info(req: HttpRequest, group_id: int) -> HttpResponse:
 
         group = await get_group_from_db(group_id)
 
-        if not group:
+        if group:
+            cache_key, cache_entry = group.to_cache_entry()
+        else:
             (error_code, api_response) = await fetch_group_info(group_id)
 
             if error_code is not None:
                 return HttpResponse(f"Bad VK API response, error_code {error_code}", status=422)
 
-            group = await create_group_from_api_response(api_response)
+            cache_key, cache_entry = api_response.to_cache_entry()
+            create_group_from_cache_entry.delay(cache_entry)
 
-        await cache.set(Group.get_cache_key(group.group_id), json.dumps(group.cache_info), ex=60)
-
-        return JsonResponse(group.cache_info)
+        print(cache_key, cache_entry)
+        await cache.set(cache_key, json.dumps(cache_entry), ex=60)
+        return JsonResponse(cache_entry)
     except Exception as error:
         print(error)
         print(traceback.format_exc())
 
         return HttpResponse("Internal server error/problems with connection/API is not responding", status=500)
-    finally:
-        await cache.close()

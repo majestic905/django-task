@@ -63,3 +63,12 @@ def update_groups_members_count(minutes: int = 60, max_at_once: int = 500):
         logger.info(error)
         logger.info(f"update_groups_members_count: error happened, setting up another task")
         update_groups_members_count.apply_async((minutes, max_at_once), countdown=(minutes * 60))
+
+
+@shared_task
+def create_group_from_cache_entry(cache_entry):
+    try:
+        Group.create_from_cache_entry(cache_entry)
+    except Exception as error:
+        logger.info('Failed to create group')
+        logger.info(error)

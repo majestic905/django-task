@@ -1,5 +1,6 @@
 from django.db import models
 from django.utils import timezone
+from typing import Tuple
 
 
 class Group(models.Model):
@@ -12,10 +13,21 @@ class Group(models.Model):
     def get_cache_key(group_id: int) -> str:
         return f"group:{group_id}"
 
+    @classmethod
+    def create_from_cache_entry(cls, data: dict):
+        return Group.objects.create(
+            group_id=data['id'],
+            title=data['title'],
+            users_count=data.get('users_count')
+        )
+
     @property
-    def cache_info(self) -> dict:
-        return {
-            'id': self.group_id,
-            'title': self.title,
-            'users_count': self.users_count
-        }
+    def to_cache_entry(self) -> Tuple[str, dict]:
+        return (
+            f"group:{self.group_id}",
+            {
+                'id': self.group_id,
+                'title': self.title,
+                'users_count': self.users_count
+            }
+        )

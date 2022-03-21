@@ -2,7 +2,8 @@ import asyncio
 import os
 import aiohttp
 import requests
-from typing import Tuple, Optional, List, TypedDict
+from dataclasses import dataclass
+from typing import Tuple, Optional, List
 
 
 ACCESS_TOKEN = os.environ.get('VK_API_SERVICE_ACCESS_TOKEN')
@@ -22,10 +23,39 @@ async def _init_session():
         session = aiohttp.ClientSession(timeout=timeout, connector=connector, loop=loop)
 
 
-KEYS = ['id', 'name', 'members_count']
+@dataclass(init=False)
+class ApiResponse:
+    id: int
+    name: str
+    members_count: int
+
+    def __init__(self, **kwargs):
+        """Non-default constructor allows passing non-dataclass keys without raising error"""
+
+        self.id = kwargs.get('id')
+        self.name = kwargs.get('name')
+        self.members_count = kwargs.get('members_count')
+
+    def to_cache_entry(self) -> Tuple[str, dict]:
+        return (
+            f"group:{self.id}",
+            {
+                'group_id': self.id,
+                'title': self.name,
+                'users_count': self.members_count
+            }
+        )
+
+    def to_group_create_params(self) -> dict:
+        return {
+            'id': self.id,
+            'title': self.name,
+            'users_count': self.members_count
+        }
 
 
-async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_version: str = "5.131") -> Tuple[Optional[int], Optional[dict]]:
+
+async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_version: str = "5.131") -> Tuple[Optional[int], Optional[ApiResponse]]:
     """Call VK API at https://api.vk.com/method/groups.getById for single group_id
 
     :param group_id: Integer VK group id (not the name from URL)
@@ -34,7 +64,7 @@ async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_
     :type access_token: str
     :params api_version: VK API version
     :type api_version: str
-    :returns: a tuple (error_code, response_data) where error_code is None if the request was successful
+    :returns: a tuple (error_code, ApiResponse instance) where error_code is None if the request was successful
     :rtype: tuple
     """
 
@@ -64,10 +94,10 @@ async def fetch_group_info(group_id: int, access_token: str = ACCESS_TOKEN, api_
 
         response_data = response_data[0]
 
-        return None, {key: response_data.get(key) for key in KEYS}
+        return None, ApiResponse(**response_data)
 
 
-def fetch_groups_info(group_ids: List[int], access_token: str = ACCESS_TOKEN, api_version: str = '5.131') -> List[dict]:
+def fetch_groups_info(group_ids: List[int], access_token: str = ACCESS_TOKEN, api_version: str = '5.131') -> List[ApiResponse]:
     """Fetch members count for multiple group (max 500)
 
     :param group_ids: list of VK group ids
@@ -107,4 +137,4 @@ def fetch_groups_info(group_ids: List[int], access_token: str = ACCESS_TOKEN, ap
     if not response_data or not isinstance(response_data, list) or len(response_data) != len(group_ids):
         raise KeyError('VK API returned not the same number of groups as requested')
 
-    return [{key: group_info.get(key) for key in KEYS} for group_info in response_data]
+    return [ApiResponse(**group_info) for group_info in response_data]
