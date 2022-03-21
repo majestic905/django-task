@@ -1,5 +1,5 @@
 .pytest_cache
-logs
+logs/*
 staticfiles
 celerybeat-schedule
 db.sqlite3
