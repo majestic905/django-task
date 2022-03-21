@@ -28,7 +28,7 @@ services:
       - keydb
   celery:
     build: ./app
-    command: celery --app=hello_django worker --loglevel=INFO --logfile=/usr/src/app/logs/celery.log
+    command: celery --app=hello_django worker --loglevel=INFO
     volumes:
       - ./app:/usr/src/app
     env_file:
@@ -36,17 +36,6 @@ services:
     depends_on:
       - web
       - keydb
-  celery-beat:
-    build: ./app
-    command: celery --app=hello_django beat --loglevel=INFO --logfile=/usr/src/app/logs/celery-beat.log
-    volumes:
-      - ./app/:/usr/src/app/
-    env_file:
-      - ./.env.dev
-    depends_on:
-      - web
-      - keydb
-      - celery
 
 volumes:
   postgres_data:

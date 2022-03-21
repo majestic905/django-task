@@ -36,17 +36,6 @@ services:
     depends_on:
       - web
       - keydb
-  celery-beat:
-    build:
-      context: ./app
-      dockerfile: Dockerfile.prod
-    command: celery --app=hello_django beat --loglevel=INFO
-    env_file:
-      - ./.env.prod
-    depends_on:
-      - web
-      - keydb
-      - celery
   nginx:
     build: ./nginx
     volumes:

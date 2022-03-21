@@ -1,5 +1,6 @@
 import os
 from celery import Celery
+from celery.signals import celeryd_init
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hello_django.settings')
@@ -20,7 +21,6 @@ app.control.purge()
 app.autodiscover_tasks()
 
 
-@app.on_after_finalize.connect
+@app.on_after_finalize.connect()
 def run_groups_update(sender, **kwargs):
-    print('in on_after_finalize)')
-    sender.send_task('groups.tasks.update_groups_members_count', args=(1, 100))
+    sender.send_task('groups.tasks.update_groups', args=(1, 100))
