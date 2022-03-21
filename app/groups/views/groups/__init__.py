@@ -1,13 +1,10 @@
+import asyncio
 import json
 import aioredis
 import traceback
 
-from asgiref.sync import sync_to_async
-
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.conf import settings
-from django.core import serializers
-from django.forms.models import model_to_dict
 
 from groups.vk_api import fetch_group_info
 from groups.models import Group
